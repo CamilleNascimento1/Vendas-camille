@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Vendas — Metas e Comissão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FFF7FA;
+    --surface: #FFFFFF;
+    --surface-2: #FCECF3;
+    --line: #EED1DE;
+    --text: #4A2938;
+    --text-dim: #8C6677;
+    --accent: #E9A8C1;
+    --accent-strong: #C96F94;
+    --green: #77B49C;
+    --amber: #D99C5F;
+    --red: #D66B78;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  header{
+    margin-bottom: 36px;
+  }
+
+  .cabecalho-mes{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .cabecalho-mes::before{
+    content: '';
+    width: 22px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent);
+  }
+
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 30px;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  header p{
+    margin:0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  section{ margin-bottom: 36px; }
+
+  h2{
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 10px 30px rgba(114, 57, 82, 0.05);
+  }
+
+  /* --- Linha do tempo do mês --- */
+  .tempo-topo, .tempo-datas{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .tempo-topo{ margin-bottom: 12px; }
+  .tempo-titulo{ font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; }
+  .tempo-status{ color: var(--accent-strong); font-size: 13px; font-weight: 600; }
+
+  .tempo-trilho{
+    position: relative;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+
+  .tempo-progresso{
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #F3C7D8, var(--accent-strong));
+    transition: width .35s ease;
+  }
+
+  .tempo-datas{
+    margin-top: 8px;
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+
+  /* --- Painel principal --- */
+  .painel{
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+  }
+
+  .gauge-box{
+    text-align: center;
+  }
+
+  svg { display:block; margin: 0 auto; }
+
+  .gauge-valor{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 30px;
+    font-weight: 600;
+    margin-top: -74px;
+  }
+
+  .gauge-meta{
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .faixas{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .faixa{
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+  }
+
+  .faixa.atingida{
+    border-color: var(--green);
+    background: rgba(95,184,148,0.08);
+  }
+
+  .faixa.atual{
+    border-color: var(--accent);
+    background: rgba(201,164,76,0.1);
+  }
+
+  .faixa-label{ font-size: 13px; color: var(--text-dim); }
+  .faixa-label strong{ color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+  .faixa-pct{
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .resumo{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .resumo .item{
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .resumo .rotulo{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .resumo .valor{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 19px;
+    font-weight: 600;
+  }
+
+  /* --- Formulário --- */
+  .form-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  label{
+    display:block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  input{
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+
+  input:focus, button:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  button{
+    background: var(--accent);
+    color: var(--text);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:hover{ filter: brightness(1.08); }
+
+  button.secondary{
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* --- Tabela --- */
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th{
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    font-weight: 500;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  td{
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  td.valor{
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: right;
+  }
+
+  tr:last-child td{ border-bottom: none; }
+
+  .empty{
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 20px;
+    text-align: center;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+
+  footer{
+    text-align:center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 700px){
+    .painel{ grid-template-columns: 1fr; }
+    .form-row{ grid-template-columns: 1fr; }
+    .resumo{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="cabecalho-mes" id="cabecalhoMes">Camille • Setembro</div>
+    <h1 id="tituloPrincipal">Controle de Vendas — Camille</h1>
+    <p>Acompanhamento de meta mensal e comissão por faixa</p>
+  </header>
+
+  <section>
+    <div class="card">
+      <label for="mesSelecionado">Mês de referência</label>
+      <input type="month" id="mesSelecionado" style="max-width: 220px;">
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="tempo-topo">
+        <div class="tempo-titulo" id="tempoTitulo">Linha do tempo de setembro</div>
+        <div class="tempo-status" id="tempoStatus">—</div>
+      </div>
+      <div class="tempo-trilho" role="progressbar" aria-label="Progresso do mês" aria-valuemin="0" aria-valuemax="100" id="tempoTrilho">
+        <div class="tempo-progresso" id="tempoProgresso"></div>
+      </div>
+      <div class="tempo-datas">
+        <span id="tempoInicio">1 de setembro</span>
+        <span id="tempoFim">30 de setembro</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card painel">
+      <div class="gauge-box">
+        <svg id="gaugeSvg" width="260" height="150" viewBox="0 0 260 150"></svg>
+        <div class="gauge-valor" id="gaugeValor">R$ 0,00</div>
+        <div class="gauge-meta" id="gaugeMeta">de R$ 75.000,00 (1ª meta)</div>
+      </div>
+
+      <div class="faixas" id="faixasContainer"></div>
+    </div>
+
+    <div class="resumo">
+      <div class="item">
+        <div class="rotulo">Faixa atual</div>
+        <div class="valor" id="resumoFaixa">—</div>
+      </div>
+      <div class="item">
+        <div class="rotulo">Comissão estimada</div>
+        <div class="valor" id="resumoComissao">R$ 0,00</div>
+      </div>
+      <div class="item">
+        <div class="rotulo">Falta p/ próxima faixa</div>
+        <div class="valor" id="resumoFalta">R$ 75.000,00</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Configurar metas e percentuais</h2>
+    <div class="card">
+      <form id="formConfig" class="form-row">
+        <div>
+          <label for="meta1">1ª meta (R$)</label>
+          <input type="number" id="meta1" value="75000" min="0" step="0.01" required>
+        </div>
+        <div>
+          <label for="pct1">Comissão nessa faixa (%)</label>
+          <input type="number" id="pct1" value="3" min="0" step="0.01" required>
+        </div>
+        <div></div>
+        <div>
+          <label for="meta2">2ª meta (R$)</label>
+          <input type="number" id="meta2" value="87500" min="0" step="0.01" required>
+        </div>
+        <div>
+          <label for="pct2">Comissão nessa faixa (%)</label>
+          <input type="number" id="pct2" value="4" min="0" step="0.01" required>
+        </div>
+        <button type="submit">Salvar metas</button>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <h2>Registrar venda</h2>
+    <div class="card">
+      <form id="formVenda" class="form-row">
+        <div>
+          <label for="vendaDescricao">Descrição (opcional)</label>
+          <input type="text" id="vendaDescricao" placeholder="Ex: Óculos de grau + lente">
+        </div>
+        <div>
+          <label for="vendaValor">Valor da venda (R$)</label>
+          <input type="number" id="vendaValor" placeholder="1200" min="0" step="0.01" required>
+        </div>
+        <button type="submit">Adicionar</button>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <h2>Vendas do mês</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th style="text-align:right">Valor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="vendasBody"></tbody>
+      </table>
+      <div id="vendasVazio" class="empty" style="display:none; margin-top:12px;">
+        Nenhuma venda registrada ainda.
+      </div>
+    </div>
+  </section>
+
+  <footer>Os dados ficam salvos neste navegador (não são enviados a nenhum servidor).</footer>
+
+</div>
+
+<script>
+  const CHAVE_VENDAS = 'controleVendas_vendas';
+  const CHAVE_METAS = 'controleVendas_metas';
+  const CHAVE_PROXIMO_ID = 'controleVendas_proximoId';
+
+  function carregarDados(){
+    try {
+      const vendasSalvas = localStorage.getItem(CHAVE_VENDAS);
+      const metasSalvas = localStorage.getItem(CHAVE_METAS);
+      const idSalvo = localStorage.getItem(CHAVE_PROXIMO_ID);
+
+      return {
+        vendas: vendasSalvas ? JSON.parse(vendasSalvas) : [],
+        metas: metasSalvas ? JSON.parse(metasSalvas) : [
+          { valor: 75000, pct: 3 },
+          { valor: 87500, pct: 4 }
+        ],
+        proximoId: idSalvo ? parseInt(idSalvo, 10) : 1
+      };
+    } catch (erro) {
+      console.error('Não foi possível carregar os dados salvos:', erro);
+      return {
+        vendas: [],
+        metas: [
+          { valor: 75000, pct: 3 },
+          { valor: 87500, pct: 4 }
+        ],
+        proximoId: 1
+      };
+    }
+  }
+
+  function salvarDados(){
+    try {
+      localStorage.setItem(CHAVE_VENDAS, JSON.stringify(vendas));
+      localStorage.setItem(CHAVE_METAS, JSON.stringify(metas));
+      localStorage.setItem(CHAVE_PROXIMO_ID, String(proximoId));
+    } catch (erro) {
+      console.error('Não foi possível salvar os dados:', erro);
+    }
+  }
+
+  const dadosCarregados = carregarDados();
+  let vendas = dadosCarregados.vendas;
+  let proximoId = dadosCarregados.proximoId;
+  let metas = dadosCarregados.metas;
+  let mesAtual = localStorage.getItem('controleVendas_mesSelecionado') || mesAtualFormatado();
+
+  const formConfig = document.getElementById('formConfig');
+  const formVenda = document.getElementById('formVenda');
+  const vendasBody = document.getElementById('vendasBody');
+  const vendasVazio = document.getElementById('vendasVazio');
+  const faixasContainer = document.getElementById('faixasContainer');
+  const gaugeValorEl = document.getElementById('gaugeValor');
+  const gaugeMetaEl = document.getElementById('gaugeMeta');
+  const gaugeSvg = document.getElementById('gaugeSvg');
+  const resumoFaixaEl = document.getElementById('resumoFaixa');
+  const resumoComissaoEl = document.getElementById('resumoComissao');
+  const resumoFaltaEl = document.getElementById('resumoFalta');
+
+  const mesSelecionadoInput = document.getElementById('mesSelecionado');
+  const cabecalhoMesEl = document.getElementById('cabecalhoMes');
+  const tituloPrincipalEl = document.getElementById('tituloPrincipal');
+  const tempoTituloEl = document.getElementById('tempoTitulo');
+  const tempoStatusEl = document.getElementById('tempoStatus');
+  const tempoProgressoEl = document.getElementById('tempoProgresso');
+  const tempoTrilhoEl = document.getElementById('tempoTrilho');
+  const tempoInicioEl = document.getElementById('tempoInicio');
+  const tempoFimEl = document.getElementById('tempoFim');
+
+  function mesAtualFormatado(){
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    return `${ano}-${mes}`;
+  }
+
+  function nomeDoMes(mesFormatado){
+    const [ano, mes] = mesFormatado.split('-').map(Number);
+    const data = new Date(ano, mes - 1, 1);
+    const nome = data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
+  }
+
+  function nomeDoMesSemAno(mesFormatado){
+    const [ano, mes] = mesFormatado.split('-').map(Number);
+    return new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' });
+  }
+
+  function atualizarLinhaDoTempo(){
+    const [ano, mes] = mesAtual.split('-').map(Number);
+    const agora = new Date();
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    const nomeMes = nomeDoMesSemAno(mesAtual);
+    const nomeMesTitulo = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+    const mesReal = agora.getFullYear() * 12 + agora.getMonth();
+    const mesEscolhido = ano * 12 + (mes - 1);
+
+    let diasPassados = 0;
+    let status = 'Este mês ainda não começou';
+
+    if (mesEscolhido < mesReal){
+      diasPassados = diasNoMes;
+      status = 'Mês concluído';
+    } else if (mesEscolhido === mesReal){
+      diasPassados = Math.min(agora.getDate(), diasNoMes);
+      const diasRestantes = diasNoMes - diasPassados;
+      status = `Dia ${diasPassados} • ${diasRestantes} dias restantes`;
+    }
+
+    const percentualTempo = (diasPassados / diasNoMes) * 100;
+    cabecalhoMesEl.textContent = `Camille • ${nomeMesTitulo} ${ano}`;
+    tituloPrincipalEl.textContent = `Controle de Vendas — Camille`;
+    tempoTituloEl.textContent = `Linha do tempo de ${nomeMes}`;
+    tempoStatusEl.textContent = status;
+    tempoProgressoEl.style.width = `${percentualTempo}%`;
+    tempoTrilhoEl.setAttribute('aria-valuenow', percentualTempo.toFixed(0));
+    tempoInicioEl.textContent = `1 de ${nomeMes}`;
+    tempoFimEl.textContent = `${diasNoMes} de ${nomeMes}`;
+  }
+
+  function formatarMoeda(valor){
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function totalVendido(){
+    return vendas
+      .filter(v => v.mes === mesAtual)
+      .reduce((soma, v) => soma + v.valor, 0);
+  }
+
+  function faixaAtual(total){
+    // percorre as metas em ordem decrescente e retorna a maior faixa já atingida
+    const ordenadas = [...metas].sort((a, b) => b.valor - a.valor);
+    for (const m of ordenadas){
+      if (total >= m.valor) return m;
+    }
+    return null; // ainda não atingiu nenhuma meta
+  }
+
+  function proximaFaixa(total){
+    const ordenadas = [...metas].sort((a, b) => a.valor - b.valor);
+    for (const m of ordenadas){
+      if (total < m.valor) return m;
+    }
+    return null; // já passou de todas as faixas
+  }
+
+  function desenharGauge(percentual){
+    const raio = 100;
+    const cx = 130, cy = 130;
+    const anguloInicial = Math.PI;
+    const anguloFinal = Math.PI - (Math.PI * Math.min(percentual, 100) / 100);
+
+    const x1 = cx + raio * Math.cos(anguloInicial);
+    const y1 = cy + raio * Math.sin(anguloInicial);
+    const x2 = cx + raio * Math.cos(anguloFinal);
+    const y2 = cy + raio * Math.sin(anguloFinal);
+
+    const largeArc = percentual > 50 ? 1 : 0;
+
+    gaugeSvg.innerHTML = `
+      <path d="M ${cx - raio} ${cy} A ${raio} ${raio} 0 1 1 ${cx + raio} ${cy}"
+            fill="none" stroke="var(--surface-2)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M ${x1} ${y1} A ${raio} ${raio} 0 ${largeArc} 1 ${x2} ${y2}"
+            fill="none" stroke="var(--accent)" stroke-width="18" stroke-linecap="round"/>
+    `;
+  }
+
+  function render(){
+    atualizarLinhaDoTempo();
+    const total = totalVendido();
+    const ordenadas = [...metas].sort((a, b) => a.valor - b.valor);
+    const metaFinal = ordenadas[ordenadas.length - 1].valor;
+    const percentual = metaFinal > 0 ? Math.min((total / metaFinal) * 100, 100) : 0;
+
+    desenharGauge(percentual);
+    gaugeValorEl.textContent = formatarMoeda(total);
+
+    const atual = faixaAtual(total);
+    const proxima = proximaFaixa(total);
+
+    if (proxima){
+      gaugeMetaEl.textContent = `de ${formatarMoeda(proxima.valor)} (próxima meta)`;
+    } else {
+      gaugeMetaEl.textContent = `todas as metas atingidas 🎉`;
+    }
+
+    faixasContainer.innerHTML = ordenadas.map(m => {
+      const atingida = total >= m.valor;
+      const ehAtual = atual && atual.valor === m.valor;
+      const classe = ehAtual ? 'atual' : (atingida ? 'atingida' : '');
+      return `
+        <div class="faixa ${classe}">
+          <div class="faixa-label">Meta de <strong>${formatarMoeda(m.valor)}</strong></div>
+          <div class="faixa-pct">${m.pct}%</div>
+        </div>
+      `;
+    }).join('');
+
+    if (atual){
+      resumoFaixaEl.textContent = `${atual.pct}% (a partir de ${formatarMoeda(atual.valor)})`;
+      const comissao = total * (atual.pct / 100);
+      resumoComissaoEl.textContent = formatarMoeda(comissao);
+    } else {
+      resumoFaixaEl.textContent = 'Nenhuma faixa atingida';
+      resumoComissaoEl.textContent = formatarMoeda(0);
+    }
+
+    if (proxima){
+      resumoFaltaEl.textContent = formatarMoeda(proxima.valor - total);
+    } else {
+      resumoFaltaEl.textContent = formatarMoeda(0);
+    }
+
+    renderVendas();
+  }
+
+  function renderVendas(){
+    const vendasDoMes = vendas.filter(v => v.mes === mesAtual);
+
+    if (vendasDoMes.length === 0){
+      vendasBody.innerHTML = '';
+      vendasVazio.style.display = 'block';
+      return;
+    }
+    vendasVazio.style.display = 'none';
+
+    const ordenadas = [...vendasDoMes].reverse();
+
+    vendasBody.innerHTML = ordenadas.map(v => `
+      <tr>
+        <td>${v.descricao || '—'}</td>
+        <td class="valor">${formatarMoeda(v.valor)}</td>
+        <td><button class="secondary" onclick="removerVenda(${v.id})">remover</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function removerVenda(id){
+    vendas = vendas.filter(v => v.id !== id);
+    salvarDados();
+    render();
+  }
+  window.removerVenda = removerVenda;
+
+  formConfig.addEventListener('submit', function(e){
+    e.preventDefault();
+    const meta1 = parseFloat(document.getElementById('meta1').value);
+    const pct1 = parseFloat(document.getElementById('pct1').value);
+    const meta2 = parseFloat(document.getElementById('meta2').value);
+    const pct2 = parseFloat(document.getElementById('pct2').value);
+
+    if ([meta1, pct1, meta2, pct2].some(v => isNaN(v) || v < 0)) return;
+
+    metas = [
+      { valor: meta1, pct: pct1 },
+      { valor: meta2, pct: pct2 }
+    ];
+
+    salvarDados();
+    render();
+  });
+
+  formVenda.addEventListener('submit', function(e){
+    e.preventDefault();
+    const descricao = document.getElementById('vendaDescricao').value.trim();
+    const valor = parseFloat(document.getElementById('vendaValor').value);
+
+    if (isNaN(valor) || valor <= 0) return;
+
+    vendas.push({ id: proximoId++, descricao, valor, mes: mesAtual });
+
+    salvarDados();
+    formVenda.reset();
+    render();
+  });
+
+  mesSelecionadoInput.value = mesAtual;
+  document.getElementById('meta1').value = metas[0]?.valor ?? 75000;
+  document.getElementById('pct1').value = metas[0]?.pct ?? 3;
+  document.getElementById('meta2').value = metas[1]?.valor ?? 87500;
+  document.getElementById('pct2').value = metas[1]?.pct ?? 4;
+
+  mesSelecionadoInput.addEventListener('change', function(){
+    if (!this.value) return;
+    mesAtual = this.value;
+    localStorage.setItem('controleVendas_mesSelecionado', mesAtual);
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
